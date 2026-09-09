@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Drills for Conway's Doomsday rule and single-digit divisibility.">
+  <meta name="theme-color" content="#EDEFF2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12161D" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Reckoner">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
+  <title>Ready Reckoner</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <style>
+  :root{
+    --ground:#EDEFF2; --surface:#FFFFFF; --surface-2:#E3E7EC; --sunk:#E7EAEF;
+    --line:#D2D8DF; --line-2:#B4BDC8;
+    --ink:#151A21; --ink-2:#3E4854; --muted:#6B7684;
+    --brass:#8A5E12; --brass-hi:#B8842A; --brass-soft:#F1E5CC;
+    --good:#1F7A52; --good-soft:#DCEFE5;
+    --bad:#B03A26; --bad-soft:#F8E1DB;
+    --shadow:0 1px 2px rgba(20,26,34,.05), 0 10px 28px -14px rgba(20,26,34,.22);
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans:'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --r:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#12161D; --surface:#1A202A; --surface-2:#222A36; --sunk:#151A22;
+      --line:#2B3441; --line-2:#3D4857;
+      --ink:#E6EAF0; --ink-2:#B4BECB; --muted:#8593A3;
+      --brass:#E0AC55; --brass-hi:#D9A441; --brass-soft:#2F2718;
+      --good:#4FC48C; --good-soft:#122C22;
+      --bad:#F0755C; --bad-soft:#331A14;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#12161D; --surface:#1A202A; --surface-2:#222A36; --sunk:#151A22;
+    --line:#2B3441; --line-2:#3D4857;
+    --ink:#E6EAF0; --ink-2:#B4BECB; --muted:#8593A3;
+    --brass:#E0AC55; --brass-hi:#D9A441; --brass-soft:#2F2718;
+    --good:#4FC48C; --good-soft:#122C22;
+    --bad:#F0755C; --bad-soft:#331A14;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.8);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    overscroll-behavior-y:none;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  input,select{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--brass-hi);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+  .app{max-width:540px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;
+    padding:max(10px,env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));gap:0}
+
+  /* ---------- header ---------- */
+  .hd{display:flex;align-items:center;gap:10px;min-height:44px;margin-bottom:14px}
+  .hd-title{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+  .hd-sub{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .hd-spacer{flex:1}
+  .iconbtn{width:38px;height:38px;display:grid;place-items:center;border-radius:9px;color:var(--ink-2);border:1px solid transparent}
+  .iconbtn:hover{background:var(--surface-2)}
+  .iconbtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .back{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 8px 6px 0}
+  .back:hover{color:var(--ink)}
+  .back svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .streak{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--brass);background:var(--brass-soft);
+    border:1px solid var(--brass-hi);padding:4px 9px;border-radius:999px;letter-spacing:.02em}
+
+  /* ---------- typography helpers ---------- */
+  .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .h2{font-size:19px;font-weight:600;letter-spacing:-.01em;text-wrap:balance;margin:0}
+  .lede{color:var(--ink-2);font-size:14px;margin:0}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .sec{margin-top:26px}
+  .sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .sec-hd .eyebrow{flex:1}
+
+  /* ---------- today panel ---------- */
+  .today{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+  .today-top{padding:14px 15px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .today-dow{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;letter-spacing:-.02em}
+  .today-date{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:6px;letter-spacing:.03em}
+  .today-badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);
+    border:1px solid var(--line-2);border-radius:999px;padding:3px 8px;white-space:nowrap}
+  .today-work{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--line);background:var(--sunk)}
+  .tw{flex:1 1 25%;padding:9px 10px;border-right:1px solid var(--line);min-width:0}
+  .tw:last-child{border-right:0}
+  .tw-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tw-v{font-family:var(--mono);font-size:14px;font-weight:600;margin-top:3px;color:var(--ink)}
+
+  /* ---------- rows ---------- */
+  .rows{border-top:1px solid var(--line)}
+  .row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 2px;border-bottom:1px solid var(--line);color:var(--ink)}
+  .row:hover{background:var(--surface-2)}
+  .row-body{flex:1;min-width:0}
+  .row-t{font-size:15.5px;font-weight:600;letter-spacing:-.005em}
+  .row-d{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .row-meta{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-2);text-align:right;white-space:nowrap}
+  .row-meta small{display:block;font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .row-arrow{color:var(--line-2);flex:none}
+  .row-arrow svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .row.focus .row-t::after{content:'focus';font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--bad);background:var(--bad-soft);padding:2px 5px;border-radius:4px;margin-left:8px;vertical-align:2px}
+
+  /* ---------- daily card ---------- */
+  .daily{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:14px 15px;border-radius:var(--r);
+    border:1px solid var(--brass-hi);background:var(--brass-soft);color:var(--ink)}
+  .daily.done{background:var(--good-soft);border-color:var(--good)}
+  .daily-mark{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--mono);font-size:15px;font-weight:700;color:var(--surface);background:var(--brass-hi)}
+  .daily.done .daily-mark{background:var(--good)}
+  .daily-mark svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- session ---------- */
+  .sess{flex:1;display:flex;flex-direction:column;gap:14px}
+  .progress{display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--brass-hi);transition:width .25s ease}
+  .bar.time i{transition:width .95s linear}
+  .bar.time.low i{background:var(--bad)}
+  .pcount{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    padding:20px 18px;display:flex;flex-direction:column;justify-content:center;min-height:170px;text-align:center;gap:8px}
+  .q-kicker{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .q-main{font-family:var(--mono);font-weight:600;letter-spacing:-.02em;line-height:1.12;color:var(--ink);word-break:break-word}
+  .q-date{font-size:clamp(25px,7.4vw,37px)}
+  .q-big{font-size:clamp(44px,14.5vw,70px);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  .q-ask{font-size:13.5px;color:var(--ink-2);font-family:var(--sans)}
+
+  .steps{display:flex;flex-direction:column;text-align:left;margin-top:4px;
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sunk)}
+  .step{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px}
+  .step:last-child{border-bottom:0}
+  .step-n{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);width:12px;flex:none}
+  .step-k{color:var(--muted);font-size:12px;flex:1;min-width:0}
+  .step-v{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--brass)}
+  .step.pending .step-v{color:var(--line-2)}
+
+  /* ---------- answer keys ---------- */
+  .pad{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+  .keyrow{display:flex;gap:7px}
+  .key{flex:1;min-height:56px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);
+    display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:.02em;
+    color:var(--ink);transition:background .1s,border-color .1s,transform .06s;user-select:none;-webkit-user-select:none}
+  .key:active{transform:scale(.965)}
+  .key:hover{background:var(--surface-2)}
+  .key.on{background:var(--brass-hi);border-color:var(--brass-hi);color:#1B1408}
+  .key.right{background:var(--good);border-color:var(--good);color:#fff}
+  .key.wrong{background:var(--bad);border-color:var(--bad);color:#fff}
+  .key.dim{opacity:.4}
+  .key[disabled]{cursor:default}
+  .key small{display:block;font-size:9px;font-weight:500;color:var(--muted);margin-top:2px;letter-spacing:0}
+  .key.on small,.key.right small,.key.wrong small{color:inherit;opacity:.75}
+  .q-sub{font-family:var(--sans);font-size:12.5px;color:var(--muted);margin-top:-4px}
+  .row.static{cursor:default}
+  .row.static:hover{background:transparent}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .chips .key{flex:0 1 calc(20% - 6px);min-width:54px}
+  .chips.dow .key{flex:0 1 calc(25% - 6px)}
+  .cta{width:100%;min-height:52px;border-radius:11px;background:var(--ink);color:var(--ground);
+    font-weight:600;font-size:15px;display:grid;place-items:center;letter-spacing:-.01em;transition:opacity .12s}
+  .cta:active{opacity:.85}
+  .cta.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line-2)}
+
+  /* ---------- verdict ---------- */
+  .verdict{border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:var(--surface)}
+  .verdict.ok{background:var(--good-soft);border-color:var(--good)}
+  .verdict.no{background:var(--bad-soft);border-color:var(--bad)}
+  .v-top{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;
+    letter-spacing:.1em;text-transform:uppercase}
+  .verdict.ok .v-top{color:var(--good)}
+  .verdict.no .v-top{color:var(--bad)}
+  .v-top .t{margin-left:auto;color:var(--muted);letter-spacing:.04em;text-transform:none;font-weight:500}
+  .work{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+  .wl{display:flex;gap:9px;align-items:baseline;font-size:13px;line-height:1.45}
+  .wl-n{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);width:13px;flex:none}
+  .wl-b{min-width:0;color:var(--ink-2)}
+  .wl-b .m{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .wl-b .note{color:var(--muted);font-size:12px;display:block;margin-top:1px}
+  .wl.miss .wl-b .m{color:var(--bad)}
+  .wl.hit .wl-b .m{color:var(--good)}
+
+  /* ---------- stats ---------- */
+  .tiles{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+  .tile{flex:1;padding:12px;border-right:1px solid var(--line);min-width:0}
+  .tile:last-child{border-right:0}
+  .tile-v{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .tile-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .chart{width:100%;height:auto;display:block}
+  .chart .grid{stroke:var(--line);stroke-width:1}
+  .chart .axis{fill:var(--muted);font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+  .chart .ln{fill:none;stroke:var(--brass-hi);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .chart .ar{fill:var(--brass-hi);opacity:.13}
+  .chart .dot{fill:var(--surface);stroke:var(--brass-hi);stroke-width:2}
+  .heat{display:grid;gap:4px}
+  .hc{position:relative;height:44px;border-radius:6px;background:var(--sunk);
+    border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .hc i{position:absolute;inset:0;opacity:0}
+  .hc span{position:relative;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink)}
+  .hc small{position:relative;font-family:var(--mono);font-size:8.5px;color:var(--muted);margin-top:2px}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;margin-top:9px}
+  .lg{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .lg i{width:9px;height:9px;border-radius:2px;display:block}
+  .empty{border:1px dashed var(--line-2);border-radius:var(--r);padding:20px 16px;text-align:center;color:var(--muted);font-size:13.5px}
+
+  /* ---------- settings / reference ---------- */
+  .field{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .field.stack{flex-direction:column;align-items:stretch;gap:10px}
+  .field.stack .seg{width:100%}
+  .field.stack .seg button{flex:1}
+  .field-b{flex:1;min-width:0}
+  .field-t{font-size:14.5px;font-weight:500}
+  .field-d{font-size:12px;color:var(--muted);margin-top:1px}
+  .sw{width:46px;height:28px;flex:none;border-radius:999px;background:var(--line-2);position:relative;transition:background .15s}
+  .sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .sw.on{background:var(--good)}
+  .sw.on i{transform:translateX(18px)}
+  .seg{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;flex:none}
+  .seg button{padding:7px 11px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);border-right:1px solid var(--line-2)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--ink);color:var(--ground)}
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tbl th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;padding:0 10px 7px 0;border-bottom:1px solid var(--line-2)}
+  .tbl td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+  .tbl td:first-child{font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--ink)}
+  .tbl td.hi{color:var(--brass);font-family:var(--mono);font-weight:600;white-space:nowrap}
+  .tbl .mn{color:var(--muted);font-size:12.5px;display:block;margin-top:2px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .prose p{margin:0 0 10px;color:var(--ink-2);font-size:14px;max-width:62ch}
+  .prose p:last-child{margin-bottom:0}
+  .prose code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line);
+    padding:1px 5px;border-radius:4px;color:var(--ink)}
+  .toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    background:var(--ink);color:var(--ground);font-size:13px;padding:9px 15px;border-radius:999px;z-index:50;
+    box-shadow:var(--shadow);animation:pop .2s ease}
+  @keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}
+  </style>
+  <style>
+    :root{ color-scheme: light dark; }
+    img{ max-width:100%; }
+    [hidden]{ display:none !important; }
+    .ns{ max-width:38rem; margin:0 auto; padding:24px 4px; }
+    .ns b{ display:block; font-size:15px; margin-bottom:10px; color:var(--ink); }
+    .ns p{ margin:0 0 10px; font-size:14px; color:var(--ink-2); line-height:1.55; }
+    .boot-error{ margin:24px 0; }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+  <noscript>
+    <div class="ns">
+      <b>JavaScript is turned off — or this file is being previewed rather than opened.</b>
+      <p>Ready Reckoner builds every question in the browser, so it cannot show anything without scripts.</p>
+      <p><b>On an iPhone or iPad:</b> tapping an HTML file in Files opens it in Quick Look, which never runs scripts. Share it to Safari, or just use the home-screen version.</p>
+      <p><b>On a computer:</b> enable JavaScript for local files, or open the page in a different browser.</p>
+    </div>
+  </noscript>
+  </div>
+<script>
+"use strict";
+/* ============================================================
+   Ready Reckoner — calendar + divisibility drills
+   ============================================================ */
+
+/* ---------- 1. calendar maths (verified against Date, 1583-2400) ---------- */
+var DOW  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var DOW3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MON  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MON3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function isLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+function centAnchor(c){ return [2,0,5,3][((c % 4) + 4) % 4]; }       // c = floor(year/100)
+function yearCode(yy){ var a=Math.floor(yy/12), b=yy%12, c=Math.floor(b/4); return (a+b+c)%7; }
+function doomsdayOf(y){ return (centAnchor(Math.floor(y/100)) + yearCode(y%100)) % 7; }
+function monthDD(m, leap){ return [leap?4:3, leap?29:28, 14,4,9,6,11,8,5,10,7,12][m-1]; }
+function dayOfWeek(y,m,d){ return ((doomsdayOf(y) + (d - monthDD(m, isLeap(y)))) % 7 + 7) % 7; }
+function daysInMonth(y,m){ return [31, isLeap(y)?29:28, 31,30,31,30,31,31,30,31,30,31][m-1]; }
+function ord(n){ var s=['th','st','nd','rd'], v=n%100; return n + (s[(v-20)%10] || s[v] || s[0]); }
+function fmtDate(y,m,d){ return d + ' ' + MON[m-1] + ' ' + y; }
+
+var MNEMONIC = {
+  1:  'the 3rd — 4th in a leap year ("the 3rd, 3 years in 4")',
+  2:  'the last day of February',
+  3:  'the 14th — Pi Day, 3/14',
+  4:  '4/4 — one of the even pairs',
+  5:  'the 9th — "9-to-5 at the 7-11"',
+  6:  '6/6 — one of the even pairs',
+  7:  'the 11th — "9-to-5 at the 7-11"',
+  8:  '8/8 — one of the even pairs',
+  9:  'the 5th — "9-to-5 at the 7-11"',
+  10: '10/10 — one of the even pairs',
+  11: 'the 7th — "9-to-5 at the 7-11"',
+  12: '12/12 — one of the even pairs'
+};
+function centName(c){ return DOW[centAnchor(c)]; }
+
+function ycWorking(yy){
+  var a=Math.floor(yy/12), b=yy%12, c=Math.floor(b/4), s=a+b+c;
+  return (yy<10?'0'+yy:''+yy) + ' ÷ 12 = ' + a + ' r ' + b + ' · ' + b + ' ÷ 4 = ' + c +
+         ' · ' + a + '+' + b + '+' + c + ' = ' + s + (s>=7 ? ' → ' + (s%7) : '');
+}
+
+/* ---------- 2. divisibility ---------- */
+function digitSum(n){ var s=0; n=Math.abs(n); while(n){ s+=n%10; n=Math.floor(n/10); } return s; }
+function altSum(n){ var s=0,k=1; n=Math.abs(n); while(n){ s+=k*(n%10); k=-k; n=Math.floor(n/10); } return s; }
+
+var RULES = {
+  2: { name:'2', rule:'Last digit is even.' },
+  3: { name:'3', rule:'Digits add to a multiple of 3.' },
+  4: { name:'4', rule:'Last two digits make a multiple of 4.' },
+  5: { name:'5', rule:'Ends in 0 or 5.' },
+  6: { name:'6', rule:'Passes both the 2 and the 3 test.' },
+  7: { name:'7', rule:'Chop the last digit, double it, subtract. Repeat.' },
+  8: { name:'8', rule:'Last three digits make a multiple of 8 — halve three times.' },
+  9: { name:'9', rule:'Digits add to a multiple of 9.' },
+  11:{ name:'11', rule:'Alternately add and subtract the digits; result is a multiple of 11.' }
+};
+
+function sevenChain(n){
+  var steps=[], x=Math.abs(n), guard=0;
+  while(x >= 100 && guard++ < 8){
+    var last = x % 10, rest = (x - last) / 10, nx = rest - 2*last;
+    steps.push(rest + ' − 2×' + last + ' = ' + nx);
+    x = Math.abs(nx);
+  }
+  return { steps: steps, end: x };
+}
+
+function divWorking(n, d){
+  var S, L, ch, M, h;
+  switch(d){
+    case 2: return 'last digit ' + (n%10) + ' is ' + (n%2 ? 'odd' : 'even');
+    case 3: S = digitSum(n);
+      return 'digits add to ' + S + (S>9 ? ' → ' + digitSum(S) : '') + ', ' + (S%3 ? 'not a multiple of 3' : 'a multiple of 3');
+    case 4: L = n % 100;
+      return 'last two digits ' + (L<10?'0'+L:L) + ' ÷ 4 ' + (L%4 ? 'leaves ' + (L%4) : '= ' + (L/4) + ' exactly');
+    case 5: return 'ends in ' + (n%10);
+    case 6: S = digitSum(n);
+      return (n%2 ? 'odd, so it fails the 2 test' : 'even ✓') + ' · digits add to ' + S + (S%3 ? ' (not a multiple of 3)' : ' ✓');
+    case 7: ch = sevenChain(n);
+      return (ch.steps.length ? ch.steps.join(' · ') + ' · ' : '') + ch.end + (ch.end % 7 ? ' is not a multiple of 7' : ' is a multiple of 7');
+    case 8: M = n % 1000; h = M;
+      var halves = [];
+      for (var i=0;i<3;i++){ if (h % 2) { halves.push(h + ' is odd — stop'); h = -1; break; } h = h/2; halves.push('÷ 2 = ' + h); }
+      return 'last three digits ' + M + ': ' + halves.join(' · ') + (M%8 ? ' — not a multiple of 8' : ' — whole number, so yes');
+    case 9: S = digitSum(n);
+      return 'digits add to ' + S + (S>9 ? ' → ' + digitSum(S) : '') + ', ' + (S%9 ? 'not a multiple of 9' : 'a multiple of 9');
+    case 11: var A = altSum(n);
+      return 'alternating sum = ' + A + ', ' + (A%11 ? 'not a multiple of 11' : 'a multiple of 11');
+  }
+  return '';
+}
+
+/* ---------- 3. storage ---------- */
+var KEY = 'readyReckoner.v1';
+var DEFAULTS = {
+  yearMin: 1900, yearMax: 2099,
+  digits: [3], use11: false,
+  theme: 'system', sound: true, autoAdvance: true, timerLen: 60
+};
+var DB;
+
+function blankDB(){
+  return { v:1, settings: Object.assign({}, DEFAULTS, { digits:[3] }),
+           skills:{}, buckets:{}, sessions:[], totals:{n:0,ok:0,ms:0},
+           daily:{ last:null, streak:0, best:0, score:null, total:null } };
+}
+function loadDB(){
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (!raw) return blankDB();
+    var d = JSON.parse(raw);
+    var base = blankDB();
+    d = Object.assign(base, d);
+    d.settings = Object.assign({}, DEFAULTS, d.settings || {});
+    if (!Array.isArray(d.settings.digits) || !d.settings.digits.length) d.settings.digits = [3];
+    return d;
+  } catch(e){ return blankDB(); }
+}
+var saveTimer = null;
+function saveDB(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch(e){}
+  }, 180);
+}
+function stat(map, k){ return map[k] || { n:0, ok:0, ms:0 }; }
+function bump(map, k, ok, ms){
+  var s = map[k] || (map[k] = { n:0, ok:0, ms:0 });
+  s.n++; if (ok) s.ok++; s.ms += ms;
+}
+function acc(s){ return s.n ? s.ok / s.n : null; }
+function avgMs(s){ return s.n ? s.ms / s.n : null; }
+
+/* ---------- 4. random + weighted selection ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+var RNG = Math.random;
+function ri(lo, hi){ return lo + Math.floor(RNG() * (hi - lo + 1)); }
+function one(arr){ return arr[Math.floor(RNG() * arr.length)]; }
+
+var TARGET = { month:2600, century:2200, yearcode:4600, ddyear:5600, fulldate:10000, div:11000 };
+
+function bucketWeight(key, target){
+  var s = DB.buckets[key];
+  if (!s || s.n < 3) return 3;
+  var err = 1 - s.ok / s.n;
+  var slow = Math.min(2, Math.max(0, (s.ms / s.n) / target - 1));
+  return 1 + 5 * err + 1.5 * slow;
+}
+/* PLAIN = uniform (used by the daily challenge so it is identical every load) */
+var PLAIN = false;
+function wpick(keys, target){
+  if (PLAIN) return one(keys);
+  if (RNG() < 0.25) return one(keys);
+  var w = keys.map(function(k){ return bucketWeight(k, target); });
+  var tot = w.reduce(function(a,b){ return a+b; }, 0), r = RNG() * tot;
+  for (var i=0;i<keys.length;i++){ r -= w[i]; if (r <= 0) return keys[i]; }
+  return keys[keys.length-1];
+}
+function centuries(){
+  var a = Math.floor(DB.settings.yearMin/100), b = Math.floor(DB.settings.yearMax/100), out=[];
+  for (var c=a;c<=b;c++) out.push(c);
+  return out;
+}
+function pickYear(){
+  var lo = DB.settings.yearMin, hi = DB.settings.yearMax;
+  var c = +wpick(centuries().map(function(c){ return 'c:'+c; }), TARGET.century).slice(2);
+  var dec = +wpick([0,1,2,3,4,5,6,7,8,9].map(function(d){ return 'y:'+d; }), TARGET.yearcode).slice(2);
+  var y = c*100 + dec*10 + ri(0,9);
+  if (y < lo || y > hi) y = ri(lo, hi);
+  return y;
+}
+function divisors(){ var d = [2,3,4,5,6,7,8,9]; if (DB.settings.use11) d.push(11); return d; }
+
+/* ---------- 5. question generators ---------- */
+function qMonth(){
+  var m = +wpick(MON.map(function(_,i){ return 'm:'+(i+1); }), TARGET.month).slice(2);
+  var leap = (m <= 2) && RNG() < 0.5;
+  var dd = monthDD(m, leap);
+  return {
+    skill:'month', buckets:['m:'+m],
+    kicker:'Month doomsday', main: MON[m-1], mainCls:'q-date',
+    sub: (m<=2 ? (leap ? 'in a leap year' : 'in a common year') : ''),
+    ask:'Which date is the doomsday?', type:'dd', answer: dd,
+    work: [{ k: MON[m-1] + ' doomsday', v: 'the ' + ord(dd), note: MNEMONIC[m] }]
+  };
+}
+function qCentury(){
+  var c = +wpick(centuries().map(function(c){ return 'c:'+c; }), TARGET.century).slice(2);
+  var a = centAnchor(c);
+  return {
+    skill:'century', buckets:['c:'+c],
+    kicker:'Century anchor', main: c + '00s', mainCls:'q-date',
+    ask:'Which day is the anchor for this century?', type:'dow', answer: a,
+    work: [{ k:'Anchor for ' + c + '00', v: DOW[a],
+             note:'The 400-year cycle runs Tuesday, Sunday, Friday, Wednesday from 2000.' }]
+  };
+}
+function qYearCode(){
+  var dec = +wpick([0,1,2,3,4,5,6,7,8,9].map(function(d){ return 'y:'+d; }), TARGET.yearcode).slice(2);
+  var yy = dec*10 + ri(0,9);
+  return {
+    skill:'yearcode', buckets:['y:'+dec],
+    kicker:'Year code', main: "'" + (yy<10 ? '0'+yy : yy), mainCls:'q-date',
+    ask:'How many days past the century anchor?', type:'n7', answer: yearCode(yy),
+    work: [{ k:'Year code', v: '+' + yearCode(yy), note: ycWorking(yy) }]
+  };
+}
+function qDDYear(){
+  var y = pickYear(), c = Math.floor(y/100), yy = y%100, dec = Math.floor(yy/10);
+  var a = centAnchor(c), code = yearCode(yy), dd = doomsdayOf(y);
+  return {
+    skill:'ddyear', buckets:['c:'+c, 'y:'+dec],
+    kicker:'Doomsday of the year', main: '' + y, mainCls:'q-date',
+    ask:"Which day is this year's doomsday?", type:'dow', answer: dd,
+    work: [
+      { k:'Century anchor', v: DOW[a], note: c + '00s → ' + centName(c) },
+      { k:'Year code', v: '+' + code, note: ycWorking(yy) },
+      { k:'Doomsday ' + y, v: DOW[dd], note: DOW3[a] + ' + ' + code + ' = ' + DOW3[dd] }
+    ]
+  };
+}
+function qFullDate(){
+  var y = pickYear();
+  var m = +wpick(MON.map(function(_,i){ return 'm:'+(i+1); }), TARGET.month).slice(2);
+  var d = ri(1, daysInMonth(y, m));
+  var c = Math.floor(y/100), yy = y%100, dec = Math.floor(yy/10), leap = isLeap(y);
+  var a = centAnchor(c), code = yearCode(yy), dy = doomsdayOf(y), md = monthDD(m, leap), ans = dayOfWeek(y,m,d);
+  var off = d - md, offTxt = (off >= 0 ? '+' : '−') + Math.abs(off);
+  return {
+    skill:'fulldate', buckets:['c:'+c, 'y:'+dec, 'm:'+m],
+    kicker:'Day of the week', main: fmtDate(y,m,d), mainCls:'q-date',
+    ask:'Which day of the week?', type:'dow', answer: ans,
+    meta:{ y:y, m:m, d:d },
+    work: [
+      { k:'Century anchor', v: DOW[a], note: c + '00s → ' + centName(c) },
+      { k:'Year code', v: '+' + code, note: ycWorking(yy) },
+      { k:'Doomsday ' + y, v: DOW[dy], note: DOW3[a] + ' + ' + code + ' = ' + DOW3[dy] + (leap ? ' · leap year' : '') },
+      { k: MON[m-1] + ' doomsday', v: 'the ' + ord(md), note: MNEMONIC[m] },
+      { k:'Offset', v: offTxt, note: d + ' − ' + md + ' = ' + off + ' → ' + DOW3[dy] + ' ' + offTxt + ' = ' + DOW[ans] }
+    ]
+  };
+}
+function qDiv(){
+  var ds = divisors();
+  var digits = one(DB.settings.digits);
+  var lo = Math.pow(10, digits-1), hi = Math.pow(10, digits) - 1, n;
+  if (!PLAIN && RNG() < 0.6){
+    var d = +wpick(ds.map(function(x){ return 'd:'+x; }), TARGET.div).slice(2);
+    n = d * ri(Math.ceil(lo/d), Math.floor(hi/d));
+  } else n = ri(lo, hi);
+  var hits = ds.filter(function(d){ return n % d === 0; });
+  return {
+    skill:'div', buckets: ds.map(function(d){ return 'd:'+d; }),
+    kicker:'Single-digit factors', main: n.toLocaleString('en-GB'), mainCls:'q-big',
+    ask:'Tap every one that divides it — none is a valid answer', type:'div',
+    answer: hits, meta:{ n:n, set:ds },
+    work: ds.map(function(d){
+      return { k:'÷ ' + d, v: (n % d === 0 ? 'yes' : 'no'), hit: n % d === 0, note: divWorking(n, d) };
+    })
+  };
+}
+function qCoach(){
+  var q = qFullDate(), mt = q.meta, y = mt.y, m = mt.m, d = mt.d;
+  var c = Math.floor(y/100), yy = y%100, dec = Math.floor(yy/10), leap = isLeap(y);
+  return {
+    coach:true, y:y, m:m, d:d, date: fmtDate(y,m,d), work: q.work,
+    steps:[
+      { label:'Century anchor', ask:'Which day is the anchor for the ' + c + '00s?',
+        type:'dow', answer: centAnchor(c), skill:'century', buckets:['c:'+c],
+        show: function(v){ return DOW3[v]; } },
+      { label:'Year code', ask:"What is the year code for '" + (yy<10?'0'+yy:yy) + '?',
+        type:'n7', answer: yearCode(yy), skill:'yearcode', buckets:['y:'+dec],
+        show: function(v){ return '+' + v; } },
+      { label:'Doomsday ' + y, ask:'Anchor + code — which day is the doomsday of ' + y + '?',
+        type:'dow', answer: doomsdayOf(y), skill:'ddyear', buckets:['c:'+c,'y:'+dec],
+        show: function(v){ return DOW3[v]; } },
+      { label: MON[m-1] + ' doomsday', ask:'Which date is the doomsday in ' + MON[m-1] + (leap ? ' of a leap year' : '') + '?',
+        type:'dd', answer: monthDD(m, leap), skill:'month', buckets:['m:'+m],
+        show: function(v){ return 'the ' + ord(v); } },
+      { label:'The answer', ask:'So which day is ' + fmtDate(y,m,d) + '?',
+        type:'dow', answer: dayOfWeek(y,m,d), skill:'fulldate', buckets:['c:'+c,'y:'+dec,'m:'+m],
+        show: function(v){ return DOW[v]; } }
+    ]
+  };
+}
+var GEN = { month:qMonth, century:qCentury, yearcode:qYearCode, ddyear:qDDYear, fulldate:qFullDate, div:qDiv };
+
+/* ---------- 6. session engine ---------- */
+var SESS = null;
+var SKILL_LABEL = { month:'Month doomsdays', century:'Century anchors', yearcode:'Year codes',
+                    ddyear:'Doomsday of the year', fulldate:'Full dates', div:'Divisibility' };
+
+function startSession(cfg){
+  PLAIN = !!cfg.seed;
+  RNG = cfg.seed ? mulberry32(cfg.seed) : Math.random;
+  SESS = { cfg:cfg, i:0, ok:0, n:0, results:[], q:null, phase:'ask',
+           sel:[], step:0, stepAns:[], began:Date.now(),
+           endsAt: cfg.timed ? Date.now() + cfg.seconds*1000 : null, tStart:0 };
+  nextQuestion();
+  if (cfg.timed) startClock();
+  render();
+}
+function nextQuestion(){
+  var cfg = SESS.cfg;
+  SESS.phase = 'ask'; SESS.sel = []; SESS.step = 0; SESS.stepAns = [];
+  var skill = cfg.seq ? cfg.seq[SESS.i % cfg.seq.length]
+            : cfg.skills.length === 1 ? cfg.skills[0] : one(cfg.skills);
+  SESS.q = cfg.coach ? qCoach() : GEN[skill]();
+  SESS.tStart = performance.now();
+}
+function finishSession(){
+  stopClock();
+  var cfg = SESS.cfg, ms = SESS.results.reduce(function(a,r){ return a + r.ms; }, 0);
+  if (SESS.n > 0){
+    SESS.pb = cfg.key === 'speed' && SESS.ok > (bestSpeed() == null ? -1 : bestSpeed());
+    DB.sessions.push({ t: Date.now(), mode: cfg.key, n: SESS.n, ok: SESS.ok, ms: ms });
+    if (DB.sessions.length > 80) DB.sessions = DB.sessions.slice(-80);
+    if (cfg.key === 'daily'){
+      var tk = todayKey(), repeat = DB.daily.last === tk;
+      if (!repeat){
+        var y = new Date(); y.setDate(y.getDate()-1);
+        DB.daily.streak = (DB.daily.last === dayKey(y)) ? DB.daily.streak + 1 : 1;
+        DB.daily.best = Math.max(DB.daily.best || 0, DB.daily.streak);
+      }
+      DB.daily.last = tk;
+      DB.daily.score = repeat ? Math.max(DB.daily.score || 0, SESS.ok) : SESS.ok;
+      DB.daily.total = SESS.n;
+    }
+    saveDB();
+  }
+  go('results');
+}
+function answer(value){
+  if (SESS.phase !== 'ask') return;
+  var q = SESS.q, ms = performance.now() - SESS.tStart, ok, correct;
+
+  if (q.coach){
+    var st = q.steps[SESS.step];
+    ok = value === st.answer;
+    bump(DB.skills, st.skill, ok, ms); st.buckets.forEach(function(b){ bump(DB.buckets, b, ok, ms); });
+    DB.totals.n++; DB.totals.ms += ms; if (ok) DB.totals.ok++;
+    SESS.stepAns.push({ v:value, ok:ok });
+    SESS.n++; if (ok) SESS.ok++;
+    SESS.results.push({ skill: st.skill, ok: ok, ms: ms });
+    SESS.lastOk = ok; SESS.lastMs = ms;
+    beep(ok);
+    if (ok && SESS.step < q.steps.length - 1){
+      SESS.step++; SESS.tStart = performance.now(); render(); return;
+    }
+    SESS.phase = 'shown'; saveDB(); render();
+    if (ok && DB.settings.autoAdvance) setTimeout(advance, 700);
+    return;
+  }
+
+  if (q.type === 'div'){
+    var want = q.answer, got = SESS.sel;
+    correct = q.meta.set.every(function(d){ return (want.indexOf(d) >= 0) === (got.indexOf(d) >= 0); });
+    q.meta.set.forEach(function(d){
+      var right = (want.indexOf(d) >= 0) === (got.indexOf(d) >= 0);
+      bump(DB.buckets, 'd:'+d, right, ms);
+    });
+    ok = correct;
+  } else {
+    ok = value === q.answer;
+    q.buckets.forEach(function(b){ bump(DB.buckets, b, ok, ms); });
+  }
+  bump(DB.skills, q.skill, ok, ms);
+  DB.totals.n++; DB.totals.ms += ms; if (ok) DB.totals.ok++;
+  SESS.n++; if (ok) SESS.ok++;
+  SESS.results.push({ skill:q.skill, ok:ok, ms:ms });
+  SESS.given = value; SESS.lastOk = ok; SESS.lastMs = ms; SESS.phase = 'shown';
+  beep(ok); saveDB(); render();
+  if (ok && DB.settings.autoAdvance) setTimeout(advance, SESS.cfg.timed ? 380 : 650);
+}
+function advance(){
+  if (!SESS || SESS.phase !== 'shown') return;
+  // coach: a wrong answer part-way through still walks the rest of the date
+  if (SESS.q.coach && SESS.step < SESS.q.steps.length - 1){
+    SESS.step++; SESS.phase = 'ask'; SESS.tStart = performance.now(); render(); return;
+  }
+  SESS.i++;
+  if (SESS.cfg.timed){
+    if (Date.now() >= SESS.endsAt) return finishSession();
+  } else if (SESS.cfg.limit && SESS.i >= SESS.cfg.limit){
+    return finishSession();
+  }
+  nextQuestion(); render();
+}
+var clockId = null;
+function startClock(){
+  stopClock();
+  clockId = setInterval(function(){
+    if (!SESS || !SESS.endsAt) return stopClock();
+    var left = SESS.endsAt - Date.now();
+    var el = document.getElementById('clock'), bar = document.getElementById('tbar');
+    if (el) el.textContent = Math.max(0, Math.ceil(left/1000)) + 's';
+    if (bar){
+      bar.style.width = Math.max(0, left / (SESS.cfg.seconds*1000) * 100) + '%';
+      bar.parentNode.classList.toggle('low', left < 10000);
+    }
+    if (left <= 0 && SESS.phase !== 'over'){ SESS.phase = 'over'; finishSession(); }
+  }, 250);
+}
+function stopClock(){ if (clockId) { clearInterval(clockId); clockId = null; } }
+
+/* ---------- 7. sound ---------- */
+var actx = null;
+function beep(ok){
+  if (!DB.settings.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    var t = actx.currentTime;
+    var mk = function(f, at, dur, vol){
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t+at);
+      g.gain.linearRampToValueAtTime(vol, t+at+0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+at+dur);
+      o.connect(g); g.connect(actx.destination); o.start(t+at); o.stop(t+at+dur+0.02);
+    };
+    if (ok){ mk(660, 0, 0.09, 0.10); mk(990, 0.065, 0.11, 0.085); }
+    else   { mk(180, 0, 0.20, 0.11); }
+  } catch(e){}
+}
+
+/* ---------- 8. view helpers ---------- */
+var APP = document.getElementById('app');
+var VIEW = 'home', PARAM = null;
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function go(v, p){ VIEW = v; PARAM = p || null; if (v !== 'session') stopClock(); window.scrollTo(0,0); render(); }
+function pct(x){ return Math.round(x*100) + '%'; }
+function secs(ms){ return (ms/1000).toFixed(ms < 10000 ? 1 : 0) + 's'; }
+function todayKey(){ return dayKey(new Date()); }
+function dayKey(d){ return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate(); }
+function toast(msg){
+  var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 1900);
+}
+var ICON = {
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  left:'<path d="m15 18-6-6 6-6"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>'
+};
+function svg(name, cls){ return '<svg viewBox="0 0 24 24" class="' + (cls||'') + '">' + ICON[name] + '</svg>'; }
+function arrow(){ return '<span class="row-arrow">' + svg('chev') + '</span>'; }
+
+function header(title, sub, back){
+  return '<div class="hd">' +
+    (back ? '<button class="back" data-go="' + back + '">' + svg('left') + ' Back</button><div class="hd-spacer"></div><div class="hd-sub">' + esc(title) + '</div>'
+          : '<div><div class="hd-title">' + esc(title) + '</div>' + (sub ? '<div class="hd-sub">' + esc(sub) + '</div>' : '') + '</div>' +
+            '<div class="hd-spacer"></div>' +
+            (DB.daily.streak > 0 ? '<span class="streak">Streak ' + DB.daily.streak + '</span>' : '') +
+            '<button class="iconbtn" data-go="settings" aria-label="Settings">' + svg('gear') + '</button>') +
+  '</div>';
+}
+function row(opts){
+  return '<button class="row' + (opts.focus ? ' focus' : '') + '" ' + (opts.act ? 'data-act="' + opts.act + '"' : 'data-go="' + opts.view + '"') +
+    (opts.arg != null ? ' data-arg="' + esc(opts.arg) + '"' : '') + '>' +
+    '<div class="row-body"><div class="row-t">' + esc(opts.title) + '</div>' +
+    (opts.desc ? '<div class="row-d">' + esc(opts.desc) + '</div>' : '') + '</div>' +
+    (opts.meta ? '<div class="row-meta">' + opts.meta + '</div>' : '') + arrow() + '</button>';
+}
+function metaFor(skill){
+  var s = DB.skills[skill];
+  if (!s || !s.n) return '<small>new</small>';
+  return pct(acc(s)) + '<small>' + secs(avgMs(s)) + '</small>';
+}
+function worstSkill(){
+  var best = null;
+  Object.keys(SKILL_LABEL).forEach(function(k){
+    var s = DB.skills[k]; if (!s || s.n < 6) return;
+    var score = (1 - s.ok/s.n) + Math.min(1, (s.ms/s.n) / TARGET[k] - 1) * 0.4;
+    if (!best || score > best.score) best = { k:k, score:score };
+  });
+  return best && best.score > 0.12 ? best.k : null;
+}
+
+/* ---------- 9. home ---------- */
+function viewHome(){
+  var now = new Date(), y = now.getFullYear(), m = now.getMonth()+1, d = now.getDate();
+  var c = Math.floor(y/100), yy = y%100, leap = isLeap(y);
+  var a = centAnchor(c), code = yearCode(yy), dy = doomsdayOf(y), md = monthDD(m, leap), off = d - md;
+  var done = DB.daily.last === todayKey();
+  var t = DB.totals, w = worstSkill();
+
+  var h = header('Ready Reckoner', 'calendar & factors');
+
+  h += '<div class="eyebrow" style="margin-bottom:8px">Today, by the method</div>';
+  h += '<div class="today"><div class="today-top"><div>' +
+       '<div class="today-dow">' + DOW[dayOfWeek(y,m,d)] + '</div>' +
+       '<div class="today-date">' + fmtDate(y,m,d) + '</div></div>' +
+       '<div class="today-badge">' + (leap ? 'leap year' : 'common year') + '</div></div>' +
+       '<div class="today-work">' +
+       tw('Anchor', DOW3[a]) + tw('Year code', '+' + code) + tw('Doomsday', DOW3[dy]) +
+       tw(MON3[m-1] + ' ' + md, (off >= 0 ? '+' : '−') + Math.abs(off)) +
+       '</div></div>';
+
+  h += '<div class="sec"><div class="sec-hd"><div class="eyebrow">Today’s set</div></div>';
+  h += '<button class="daily' + (done ? ' done' : '') + '" data-act="daily">' +
+       '<div class="daily-mark">' + (done ? svg('check') : '12') + '</div>' +
+       '<div class="row-body"><div class="row-t">Daily challenge</div><div class="row-d">' +
+       (done ? 'Done — ' + DB.daily.score + '/' + DB.daily.total + (DB.daily.streak > 1 ? ' · ' + DB.daily.streak + ' days running' : '') + ' · tap to replay'
+             : 'Twelve questions, fixed for ' + fmtDate(y,m,d)) +
+       '</div></div>' + arrow() + '</button></div>';
+
+  h += '<div class="sec"><div class="sec-hd"><div class="eyebrow">Train</div></div><div class="rows">';
+  h += row({ act:'coach', title:'Coach', desc:'One date at a time, walked through all five steps' });
+  h += row({ act:'speedpick', title:'Speed round', desc:DB.settings.timerLen + ' seconds, as many as you can',
+             meta: bestSpeed() != null ? bestSpeed() + '<small>best</small>' : '' });
+  h += row({ act:'practicepick', title:'Free practice', desc:'No clock, full working after every answer' });
+  h += row({ view:'drills', title:'Drills', desc:'Six sub-skills, one piece of the method each',
+             meta: w ? '<small>focus</small>' : '' });
+  h += '</div></div>';
+
+  h += '<div class="sec"><div class="sec-hd"><div class="eyebrow">Progress</div></div>';
+  h += '<div class="tiles">' +
+       tile(t.n ? t.n.toLocaleString('en-GB') : '0', 'answered') +
+       tile(t.n ? pct(t.ok/t.n) : '—', 'accuracy') +
+       tile(t.n ? secs(t.ms/t.n) : '—', 'per question') + '</div>';
+  h += '<div class="rows" style="margin-top:2px">' +
+       row({ view:'stats', title:'Statistics', desc:'Where the time is going, skill by skill' }) +
+       row({ view:'method', title:'The method', desc:'Anchors, doomsdays and the nine rules' }) +
+       '</div></div>';
+  return h;
+}
+function tw(k, v){ return '<div class="tw"><div class="tw-k">' + esc(k) + '</div><div class="tw-v">' + esc(v) + '</div></div>'; }
+function tile(v, k){ return '<div class="tile"><div class="tile-v">' + v + '</div><div class="tile-k">' + esc(k) + '</div></div>'; }
+function bestSpeed(){
+  var b = null;
+  DB.sessions.forEach(function(s){ if (s.mode === 'speed' && (b === null || s.ok > b)) b = s.ok; });
+  return b;
+}
+
+/* ---------- 10. pickers ---------- */
+function viewDrills(){
+  var w = worstSkill();
+  var h = header('Drills', null, 'home');
+  h += '<div class="eyebrow" style="margin-bottom:6px">Pieces of the doomsday method</div><div class="rows">';
+  ['month','century','yearcode','ddyear','fulldate'].forEach(function(k){
+    h += row({ act:'drill', arg:k, title:SKILL_LABEL[k], desc:DRILL_DESC[k], meta:metaFor(k), focus:w === k });
+  });
+  h += '</div><div class="eyebrow" style="margin:22px 0 6px">Divisibility</div><div class="rows">';
+  h += row({ act:'drill', arg:'div', title:SKILL_LABEL.div, desc:DRILL_DESC.div, meta:metaFor('div'), focus:w === 'div' });
+  h += '</div>';
+  return h;
+}
+var DRILL_DESC = {
+  month:'Which date is the doomsday in each month',
+  century:'Friday, Wednesday, Tuesday, Sunday — 1800s to 2100s',
+  yearcode:'The ÷12, remainder, ÷4 step',
+  ddyear:'Anchor plus year code, in one go',
+  fulldate:'The whole thing, start to finish',
+  div:'Tap every single-digit factor of the number'
+};
+function viewPick(kind){
+  var timed = kind === 'speed';
+  var h = header(timed ? 'Speed round' : 'Free practice', null, 'home');
+  h += '<div class="eyebrow" style="margin-bottom:6px">Choose a category</div><div class="rows">';
+  h += row({ act:kind, arg:'dates', title:'Dates', desc:'Full days of the week, ' + DB.settings.yearMin + '–' + DB.settings.yearMax });
+  h += row({ act:kind, arg:'div', title:'Divisibility', desc:DB.settings.digits.slice().sort().join(', ') + '-digit numbers' });
+  h += row({ act:kind, arg:'mixed', title:'Mixed', desc:'Both, shuffled together' });
+  h += row({ act:kind, arg:'weak', title:'Weak spots', desc:'Whatever you are slowest and least accurate at' });
+  h += '</div>';
+  h += '<p class="lede" style="margin-top:16px">' + (timed
+        ? DB.settings.timerLen + ' seconds on the clock. Correct answers advance straight away; wrong ones show you the working.'
+        : 'No clock. Every answer is followed by the full working. End it whenever you like.') + '</p>';
+  return h;
+}
+
+/* ---------- 11. session ---------- */
+function viewSession(){
+  var q = SESS.q, cfg = SESS.cfg;
+  var h = '<div class="hd"><button class="back" data-act="end">' + svg('left') + ' End</button>' +
+          '<div class="hd-spacer"></div><div class="hd-sub">' + esc(cfg.title) + '</div></div>';
+  h += '<div class="sess">';
+
+  if (cfg.timed){
+    h += '<div class="progress"><div class="bar time" id="tbarwrap"><i id="tbar" style="width:100%"></i></div>' +
+         '<div class="pcount"><span id="clock">' + cfg.seconds + 's</span> · ' + SESS.ok + '</div></div>';
+  } else if (cfg.limit){
+    h += '<div class="progress"><div class="bar"><i style="width:' + (SESS.i / cfg.limit * 100) + '%"></i></div>' +
+         '<div class="pcount">' + (SESS.i + 1) + '/' + cfg.limit + '</div></div>';
+  } else {
+    h += '<div class="progress"><div class="bar"><i style="width:100%"></i></div>' +
+         '<div class="pcount">' + SESS.ok + '/' + SESS.n + ' right</div></div>';
+  }
+
+  h += q.coach ? coachCard() : plainCard(q);
+  if (SESS.phase === 'shown') h += verdict();
+  h += '<div class="pad">' + keypad() + '</div>';
+  h += '</div>';
+  return h;
+}
+function plainCard(q){
+  return '<div class="card"><div class="q-kicker">' + esc(q.kicker) + '</div>' +
+    '<div class="q-main ' + q.mainCls + '">' + esc(q.main) + '</div>' +
+    (q.sub ? '<div class="q-sub">' + esc(q.sub) + '</div>' : '') +
+    '<div class="q-ask">' + esc(q.ask) + '</div></div>';
+}
+function coachCard(){
+  var q = SESS.q;
+  var h = '<div class="card" style="text-align:left;min-height:0">' +
+    '<div class="q-kicker" style="text-align:center">Step ' + (SESS.step+1) + ' of 5</div>' +
+    '<div class="q-main q-date" style="text-align:center">' + esc(q.date) + '</div>' +
+    '<div class="steps">';
+  q.steps.forEach(function(st, i){
+    var a = SESS.stepAns[i];
+    var val = a ? st.show(st.answer) : '·';
+    h += '<div class="step' + (a ? '' : ' pending') + '"><span class="step-n">' + (i+1) + '</span>' +
+         '<span class="step-k">' + esc(st.label) + '</span><span class="step-v">' + esc(val) + '</span></div>';
+  });
+  h += '</div><div class="q-ask" style="text-align:center;margin-top:6px">' + esc(q.steps[SESS.step].ask) + '</div></div>';
+  return h;
+}
+
+/* ---------- 12. keypads ---------- */
+function keypad(){
+  var q = SESS.q, shown = SESS.phase === 'shown';
+  var type = q.coach ? q.steps[SESS.step].type : q.type;
+  var right = q.coach ? q.steps[SESS.step].answer : q.answer;
+  var given = q.coach ? (SESS.stepAns[SESS.step] || {}).v : SESS.given;
+
+  if (shown && !(q.coach && SESS.lastOk && SESS.step < 4)){
+    var cont = '<button class="cta" data-act="next">' + (nearEnd() ? 'Finish' : 'Next') + '</button>';
+    if (type === 'div') return divKeys(true) + cont;
+    return keyGrid(type, right, given, true) + cont;
+  }
+  if (type === 'div') return divKeys(false) + '<button class="cta" data-act="check">Check</button>';
+  return keyGrid(type, right, given, false);
+}
+function nearEnd(){
+  var c = SESS.cfg;
+  return !!(c.limit && SESS.i + 1 >= c.limit);
+}
+function keyGrid(type, right, given, shown){
+  var items, cls = 'chips';
+  if (type === 'dow'){ items = DOW3.map(function(s,i){ return { v:i, l:s, s:i }; }); cls += ' dow'; }
+  else if (type === 'n7'){ items = [0,1,2,3,4,5,6].map(function(i){ return { v:i, l:'+' + i }; }); cls += ' dow'; }
+  else { items = [3,4,5,6,7,8,9,10,11,12,14,28,29].map(function(i){ return { v:i, l:'' + i }; }); }
+  return '<div class="' + cls + '">' + items.map(function(it){
+    var k = '';
+    if (shown){
+      if (it.v === right) k = ' right';
+      else if (it.v === given) k = ' wrong';
+      else k = ' dim';
+    }
+    return '<button class="key' + k + '"' + (shown ? ' disabled' : '') + ' data-ans="' + it.v + '">' + it.l +
+           (it.s != null ? '<small>' + it.s + '</small>' : '') + '</button>';
+  }).join('') + '</div>';
+}
+function divKeys(shown){
+  var q = SESS.q;
+  return '<div class="chips">' + q.meta.set.map(function(d){
+    var picked = SESS.sel.indexOf(d) >= 0, is = q.answer.indexOf(d) >= 0, k = '';
+    if (shown) k = is ? ' right' : (picked ? ' wrong' : ' dim');
+    else if (picked) k = ' on';
+    return '<button class="key' + k + '"' + (shown ? ' disabled' : '') + ' data-tog="' + d + '">' + d + '</button>';
+  }).join('') + '</div>';
+}
+
+/* ---------- 13. verdict ---------- */
+function verdict(){
+  var q = SESS.q, ok = SESS.lastOk;
+  var h = '<div class="verdict ' + (ok ? 'ok' : 'no') + '"><div class="v-top">' +
+          (ok ? 'Correct' : 'Not quite') + '<span class="t">' + secs(SESS.lastMs) + '</span></div>';
+  if (q.coach){
+    var st = q.steps[SESS.step];
+    h += '<div class="work"><div class="wl"><span class="wl-n">' + (SESS.step+1) + '</span><div class="wl-b">' +
+         esc(st.label) + ' is <span class="m">' + esc(st.show(st.answer)) + '</span>' +
+         '<span class="note">' + esc(coachNote(st, q)) + '</span></div></div></div>';
+  } else if (q.type === 'div'){
+    var facts = q.answer.length ? q.answer.join(' · ') : 'none';
+    h += '<div class="work"><div class="wl"><span class="wl-n">=</span><div class="wl-b">Factors: <span class="m">' + facts + '</span></div></div>';
+    var wrongs = q.work.filter(function(w, i){
+      var d = q.meta.set[i], picked = SESS.sel.indexOf(d) >= 0;
+      return picked !== w.hit;
+    });
+    (wrongs.length ? wrongs : (ok ? [] : q.work)).slice(0,4).forEach(function(w){
+      h += '<div class="wl ' + (w.hit ? 'hit' : 'miss') + '"><span class="wl-n">' + esc(w.k.replace('÷ ','')) + '</span>' +
+           '<div class="wl-b"><span class="m">' + esc(w.v) + '</span> — ' + esc(w.note) + '</div></div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="work">' + q.work.map(function(w, i){
+      return '<div class="wl"><span class="wl-n">' + (i+1) + '</span><div class="wl-b">' + esc(w.k) +
+             ' — <span class="m">' + esc(w.v) + '</span><span class="note">' + esc(w.note) + '</span></div></div>';
+    }).join('') + '</div>';
+  }
+  return h + '</div>';
+}
+function coachNote(st, q){
+  var i = q.steps.indexOf(st);
+  return q.work[i] ? q.work[i].note : '';
+}
+
+/* ---------- 14. results ---------- */
+function viewResults(){
+  if (!SESS) { VIEW = 'home'; return viewHome(); }
+  var s = SESS, cfg = s.cfg;
+  var ms = s.results.reduce(function(a,r){ return a + r.ms; }, 0);
+  var byS = {};
+  s.results.forEach(function(r){ (byS[r.skill] = byS[r.skill] || { n:0, ok:0, ms:0 }); byS[r.skill].n++; byS[r.skill].ms += r.ms; if (r.ok) byS[r.skill].ok++; });
+
+  var h = '<div class="hd"><div><div class="hd-title">' + esc(cfg.title) + '</div><div class="hd-sub">session complete</div></div></div>';
+  h += '<div class="card"><div class="q-kicker">' + (cfg.timed ? 'Correct in ' + cfg.seconds + ' seconds' : 'Score') + '</div>' +
+       '<div class="q-main q-big">' + s.ok + (cfg.timed ? '' : '<span style="color:var(--muted)">/' + s.n + '</span>') + '</div>' +
+       '<div class="q-ask">' + (s.n ? pct(s.ok/s.n) + ' accurate · ' + secs(ms/s.n) + ' a question' : 'Nothing answered') + '</div></div>';
+
+  if (s.pb) h += '<div class="verdict ok"><div class="v-top">Personal best<span class="t">' + s.ok + ' correct</span></div></div>';
+  if (cfg.key === 'daily' && DB.daily.streak > 0){
+    h += '<div class="verdict ok"><div class="v-top">Streak ' + DB.daily.streak + ' day' + (DB.daily.streak > 1 ? 's' : '') +
+         '<span class="t">best ' + DB.daily.best + '</span></div></div>';
+  }
+
+  var keys = Object.keys(byS);
+  if (keys.length > 1){
+    h += '<div class="sec"><div class="eyebrow" style="margin-bottom:8px">By skill</div><div class="rows">';
+    keys.sort(function(a,b){ return (byS[a].ok/byS[a].n) - (byS[b].ok/byS[b].n); }).forEach(function(k){
+      var v = byS[k];
+      h += '<div class="row static"><div class="row-body"><div class="row-t" style="font-size:14px">' + SKILL_LABEL[k] +
+           '</div></div><div class="row-meta">' + v.ok + '/' + v.n + '<small>' + secs(v.ms/v.n) + '</small></div></div>';
+    });
+    h += '</div></div>';
+  }
+  h += '<div class="pad"><button class="cta" data-act="again">Go again</button>' +
+       '<button class="cta ghost" data-act="home">Back to the start</button></div>';
+  return h;
+}
+
+/* ---------- 15. stats ---------- */
+function viewStats(){
+  var t = DB.totals;
+  var h = header('Statistics', null, 'home');
+  if (!t.n) return h + '<div class="empty">No answers yet. Run a drill and the numbers start here — accuracy and pace for every piece of the method.</div>';
+
+  h += '<div class="tiles">' + tile(t.n.toLocaleString('en-GB'), 'answered') + tile(pct(t.ok/t.n), 'accuracy') +
+       tile(secs(t.ms/t.n), 'per question') + '</div>';
+
+  var ss = DB.sessions.filter(function(x){ return x.n >= 3; }).slice(-20);
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">Accuracy, last ' + ss.length + ' session' + (ss.length === 1 ? '' : 's') + '</div>';
+  h += ss.length >= 2 ? lineChart(ss) : '<div class="empty">Two sessions and this becomes a chart.</div>';
+  h += '</div>';
+
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">Skills, weakest first</div><div class="rows">';
+  var w = worstSkill();
+  Object.keys(SKILL_LABEL).map(function(k){ return { k:k, s:DB.skills[k] }; })
+    .filter(function(x){ return x.s && x.s.n; })
+    .sort(function(a,b){ return acc(a.s) - acc(b.s); })
+    .forEach(function(x){
+      h += '<div class="row' + (w === x.k ? ' focus' : '') + ' static"><div class="row-body">' +
+           '<div class="row-t" style="font-size:14.5px">' + SKILL_LABEL[x.k] + '</div>' +
+           '<div class="row-d">' + x.s.n + ' answered</div></div>' +
+           '<div class="row-meta">' + pct(acc(x.s)) + '<small>' + secs(avgMs(x.s)) + '</small></div></div>';
+    });
+  h += '</div></div>';
+
+  h += heatBlock('Months', MON3.map(function(m,i){ return { key:'m:'+(i+1), label:m }; }));
+  h += heatBlock('Divisors', divisors().map(function(d){ return { key:'d:'+d, label:'' + d }; }));
+  h += heatBlock('Centuries', centuries().map(function(c){ return { key:'c:'+c, label:c + '00' }; }));
+  h += heatBlock('Decades', [0,1,2,3,4,5,6,7,8,9].map(function(d){ return { key:'y:'+d, label:"'" + d + '0' }; }));
+  h += '<div class="legend">' +
+       '<span class="lg"><i style="background:var(--good);opacity:.55"></i>85%+</span>' +
+       '<span class="lg"><i style="background:var(--brass-hi);opacity:.55"></i>60–85%</span>' +
+       '<span class="lg"><i style="background:var(--bad);opacity:.55"></i>under 60%</span>' +
+       '<span class="lg"><i style="background:var(--line-2)"></i>not tried</span></div>';
+
+  h += '<div class="pad" style="margin-top:24px"><button class="cta ghost" data-act="export">Copy my data as a backup</button></div>';
+  return h;
+}
+function bestCols(n){
+  for (var d = 6; d >= 3; d--) if (n % d === 0) return d;
+  return Math.min(n, 4);
+}
+function heatBlock(title, cells){
+  var h = '<div class="sec"><div class="eyebrow" style="margin-bottom:8px">' + title + '</div>' +
+          '<div class="heat" style="grid-template-columns:repeat(' + bestCols(cells.length) + ',1fr)">';
+  cells.forEach(function(c){
+    var s = DB.buckets[c.key], a = s && s.n ? s.ok/s.n : null;
+    var col = a === null ? null : (a >= 0.85 ? 'var(--good)' : a >= 0.6 ? 'var(--brass-hi)' : 'var(--bad)');
+    h += '<div class="hc">' + (col ? '<i style="background:' + col + ';opacity:' + (0.18 + 0.34*(1-a)).toFixed(2) + '"></i>' : '') +
+         '<span>' + esc(c.label) + '</span><small>' + (a === null ? '—' : Math.round(a*100)) + '</small></div>';
+  });
+  return h + '</div></div>';
+}
+function lineChart(ss){
+  var W = 320, H = 132, L = 28, R = 8, T = 10, B = 22;
+  var iw = W - L - R, ih = H - T - B;
+  var pts = ss.map(function(s, i){
+    return { x: L + (ss.length === 1 ? iw/2 : i / (ss.length-1) * iw), y: T + (1 - s.ok/s.n) * ih, v: s.ok/s.n };
+  });
+  var line = pts.map(function(p, i){ return (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
+  var area = line + ' L' + pts[pts.length-1].x.toFixed(1) + ' ' + (T+ih) + ' L' + pts[0].x.toFixed(1) + ' ' + (T+ih) + ' Z';
+  var g = '';
+  [0, 0.5, 1].forEach(function(v){
+    var y = T + (1-v) * ih;
+    g += '<line class="grid" x1="' + L + '" y1="' + y + '" x2="' + (W-R) + '" y2="' + y + '"/>' +
+         '<text class="axis" x="' + (L-6) + '" y="' + (y+3) + '" text-anchor="end">' + (v*100) + '</text>';
+  });
+  var d0 = new Date(ss[0].t), d1 = new Date(ss[ss.length-1].t);
+  var lab = function(d){ return d.getDate() + ' ' + MON3[d.getMonth()]; };
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Accuracy by session">' + g +
+    '<path class="ar" d="' + area + '"/><path class="ln" d="' + line + '"/>' +
+    '<circle class="dot" cx="' + pts[pts.length-1].x.toFixed(1) + '" cy="' + pts[pts.length-1].y.toFixed(1) + '" r="3.5"/>' +
+    '<text class="axis" x="' + L + '" y="' + (H-6) + '">' + lab(d0) + '</text>' +
+    '<text class="axis" x="' + (W-R) + '" y="' + (H-6) + '" text-anchor="end">' + lab(d1) + '</text></svg>';
+}
+
+/* ---------- 16. settings ---------- */
+var confirmReset = false;
+function viewSettings(){
+  var S = DB.settings;
+  var h = header('Settings', null, 'home');
+  h += '<div class="eyebrow" style="margin-bottom:2px">Difficulty</div>';
+  h += field('Year range', 'Which years the date questions come from',
+        seg('yearMin', [[1900,'1900–2099'],[1800,'1800–2199'],[1600,'1600–2399']], S.yearMin), true);
+  h += field('Number length', 'Digits in the divisibility questions', digitChips());
+  h += field('Include 11', 'Adds the alternating-sum rule', sw('use11', S.use11));
+
+  h += '<div class="eyebrow" style="margin:22px 0 2px">Session</div>';
+  h += field('Speed round length', 'Seconds on the clock', seg('timerLen', [[30,'30'],[60,'60'],[120,'120']], S.timerLen));
+  h += field('Auto-advance', 'Jump straight on when you are right', sw('autoAdvance', S.autoAdvance));
+  h += field('Sound', 'A short tone on every answer', sw('sound', S.sound));
+  h += field('Theme', null, seg('theme', [['system','Auto'],['light','Light'],['dark','Dark']], S.theme));
+
+  h += '<div class="eyebrow" style="margin:22px 0 2px">Data</div>';
+  h += '<p class="lede" style="margin:8px 0 12px">Progress is stored on this device only — nothing leaves your phone. Copy it out now and then if you would hate to lose it.</p>';
+  h += '<div class="pad"><button class="cta ghost" data-act="export">Copy my data</button>' +
+       '<button class="cta ghost" data-act="reset" style="color:var(--bad);border-color:var(--bad)">' +
+       (confirmReset ? 'Tap again to erase everything' : 'Reset all progress') + '</button></div>';
+  return h;
+}
+function field(t, d, ctrl, stack){
+  return '<div class="field' + (stack ? ' stack' : '') + '"><div class="field-b"><div class="field-t">' + esc(t) + '</div>' +
+         (d ? '<div class="field-d">' + esc(d) + '</div>' : '') + '</div>' + ctrl + '</div>';
+}
+function sw(key, on){ return '<button class="sw' + (on ? ' on' : '') + '" data-set="' + key + ':toggle" role="switch" aria-checked="' + !!on + '"><i></i></button>'; }
+function seg(key, opts, cur){
+  return '<div class="seg">' + opts.map(function(o){
+    return '<button class="' + (String(o[0]) === String(cur) ? 'on' : '') + '" data-set="' + key + ':' + o[0] + '">' + o[1] + '</button>';
+  }).join('') + '</div>';
+}
+function digitChips(){
+  return '<div class="seg">' + [3,4,5,6].map(function(d){
+    return '<button class="' + (DB.settings.digits.indexOf(d) >= 0 ? 'on' : '') + '" data-digit="' + d + '">' + d + '</button>';
+  }).join('') + '</div>';
+}
+
+/* ---------- 17. the method ---------- */
+function viewMethod(){
+  var h = header('The method', null, 'home');
+  h += '<div class="prose"><p>Every date in a year falls on one of seven weekdays, and one weekday — the <b>doomsday</b> — carries a set of easy dates. Find the year’s doomsday, jump to the nearest easy date, count the difference.</p></div>';
+
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">1 · Century anchors</div><div class="scroll"><table class="tbl">' +
+       '<tr><th>Century</th><th>Anchor</th><th>How to hold it</th></tr>';
+  [[18,'Friday','“Eighteen hundred, Friday” — the one that needs brute force'],
+   [19,'Wednesday','“We-in-dis-day” — 1900s'],
+   [20,'Tuesday','“Y-Tue-K” — the 2000s, and the one to know cold'],
+   [21,'Sunday','“Twenty-one is Sun-day”']].forEach(function(r){
+    h += '<tr><td>' + r[0] + '00s</td><td class="hi">' + r[1] + '</td><td>' + esc(r[2]) + '</td></tr>';
+  });
+  h += '</table></div><p class="lede" style="margin-top:10px">The cycle repeats every 400 years — Tuesday, Sunday, Friday, Wednesday for 2000, 2100, 2200, 2300 — so 1800 matches 2200 and 1900 matches 2300.</p></div>';
+
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">2 · Year code</div><div class="prose">' +
+       '<p>Take the last two digits. Divide by 12 — keep the whole part and the remainder. Divide the remainder by 4, whole part only. Add all three, take it mod 7, and count that many days on from the anchor.</p>' +
+       '<p><code>87 ÷ 12 = 7 r 3 · 3 ÷ 4 = 0 · 7 + 3 + 0 = 10 → 3</code></p>' +
+       '<p>So 1987 is Wednesday + 3 = <b>Saturday</b>.</p></div></div>';
+
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">3 · Month doomsdays</div><div class="scroll"><table class="tbl">' +
+       '<tr><th>Month</th><th>Date</th><th>How to hold it</th></tr>';
+  MON.forEach(function(m, i){
+    h += '<tr><td>' + m + '</td><td class="hi">' + ord(monthDD(i+1, false)) + (i < 2 ? ' / ' + ord(monthDD(i+1, true)) : '') +
+         '</td><td>' + esc(MNEMONIC[i+1]) + '</td></tr>';
+  });
+  h += '</table></div></div>';
+
+  h += '<div class="sec"><div class="eyebrow" style="margin-bottom:10px">4 · Divisibility rules</div><div class="scroll"><table class="tbl">' +
+       '<tr><th>By</th><th>Rule</th></tr>';
+  [2,3,4,5,6,7,8,9,11].forEach(function(d){
+    h += '<tr><td>' + d + '</td><td>' + esc(RULES[d].rule) + '</td></tr>';
+  });
+  h += '</table></div><p class="lede" style="margin-top:10px">The 7 test is the only slow one: 1,547 → 154 − 14 = 140 → 14 − 0 = 14, and 14 is a multiple of 7.</p></div>';
+  return h;
+}
+
+/* ---------- 18. render + events ---------- */
+function render(){
+  var h;
+  if (VIEW === 'session' && SESS) h = viewSession();
+  else if (VIEW === 'results') h = viewResults();
+  else if (VIEW === 'drills') h = viewDrills();
+  else if (VIEW === 'speedpick') h = viewPick('speed');
+  else if (VIEW === 'practicepick') h = viewPick('practice');
+  else if (VIEW === 'stats') h = viewStats();
+  else if (VIEW === 'settings') h = viewSettings();
+  else if (VIEW === 'method') h = viewMethod();
+  else { VIEW = 'home'; h = viewHome(); }
+  APP.innerHTML = h;
+}
+
+function cats(arg){
+  if (arg === 'dates') return ['fulldate'];
+  if (arg === 'div') return ['div'];
+  if (arg === 'weak'){
+    var ranked = Object.keys(SKILL_LABEL).map(function(k){
+      var s = DB.skills[k];
+      return { k:k, score: s && s.n >= 5 ? (1 - s.ok/s.n) + 0.3 * Math.min(1, (s.ms/s.n)/TARGET[k] - 1) : 0.35 };
+    }).sort(function(a,b){ return b.score - a.score; });
+    return ranked.slice(0,3).map(function(x){ return x.k; });
+  }
+  return ['fulldate','div'];
+}
+var DAILY_SEQ = ['fulldate','div','month','fulldate','yearcode','div','ddyear','fulldate','div','century','fulldate','div'];
+
+function begin(kind, arg){
+  var S = DB.settings, cfg = null;
+  if (kind === 'daily'){
+    var d = new Date();
+    cfg = { key:'daily', title:'Daily challenge', skills:['fulldate'], seq:DAILY_SEQ, limit:12,
+            seed: d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() };
+  } else if (kind === 'coach'){
+    cfg = { key:'coach', title:'Coach', skills:['fulldate'], coach:true, limit:5 };
+  } else if (kind === 'drill' && SKILL_LABEL[arg]){
+    cfg = { key:'drill:'+arg, title:SKILL_LABEL[arg], skills:[arg], limit:12 };
+  } else if (kind === 'speed'){
+    cfg = { key:'speed', title:'Speed round', skills:cats(arg), timed:true, seconds:S.timerLen };
+  } else if (kind === 'practice'){
+    cfg = { key:'practice', title:'Free practice', skills:cats(arg), limit:null };
+  }
+  if (!cfg) return;
+  cfg.kind = kind; cfg.arg = arg;
+  VIEW = 'session';
+  startSession(cfg);
+}
+
+document.addEventListener('click', function(e){
+  var el = e.target && e.target.closest ? e.target.closest('[data-go],[data-act],[data-ans],[data-tog],[data-set],[data-digit]') : null;
+  if (!el) return;
+  var d = el.dataset;
+
+  if (d.go){ confirmReset = false; go(d.go); return; }
+  if (d.ans != null){ answer(+d.ans); return; }
+  if (d.tog != null){
+    var v = +d.tog, i = SESS.sel.indexOf(v);
+    if (i >= 0) SESS.sel.splice(i,1); else SESS.sel.push(v);
+    render(); return;
+  }
+  if (d.digit != null){
+    var n = +d.digit, arr = DB.settings.digits, j = arr.indexOf(n);
+    if (j >= 0){ if (arr.length > 1) arr.splice(j,1); } else arr.push(n);
+    saveDB(); render(); return;
+  }
+  if (d.set){
+    var parts = d.set.split(':'), key = parts[0], val = parts[1];
+    if (val === 'toggle') DB.settings[key] = !DB.settings[key];
+    else if (key === 'theme') DB.settings.theme = val;
+    else if (key === 'yearMin'){
+      DB.settings.yearMin = +val;
+      DB.settings.yearMax = ({ 1900:2099, 1800:2199, 1600:2399 })[+val] || 2099;
+    } else DB.settings[key] = +val;
+    applyTheme(); saveDB(); render(); return;
+  }
+  if (d.act){
+    var a = d.act;
+    if (a === 'end'){ if (SESS && SESS.n > 0) finishSession(); else { SESS = null; go('home'); } return; }
+    if (a === 'next'){ advance(); return; }
+    if (a === 'check'){ answer(null); return; }
+    if (a === 'again'){ var cfg = SESS.cfg; begin(cfg.kind, cfg.arg); return; }
+    if (a === 'home'){ SESS = null; go('home'); return; }
+    if (a === 'speedpick'){ go('speedpick'); return; }
+    if (a === 'practicepick'){ go('practicepick'); return; }
+    if (a === 'export'){
+      try {
+        navigator.clipboard.writeText(JSON.stringify(DB));
+        toast('Copied — paste it somewhere safe');
+      } catch(err){ toast('Could not copy on this device'); }
+      return;
+    }
+    if (a === 'reset'){
+      if (!confirmReset){ confirmReset = true; render(); setTimeout(function(){ confirmReset = false; }, 4000); return; }
+      DB = blankDB(); confirmReset = false; saveDB(); applyTheme(); go('home'); toast('Progress erased'); return;
+    }
+    begin(a, d.arg);
+  }
+});
+
+/* ---------- 19. boot ---------- */
+function applyTheme(){
+  var t = DB.settings.theme;
+  if (t === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+}
+(function meta(){
+  [['apple-mobile-web-app-capable','yes'],
+   ['apple-mobile-web-app-status-bar-style','black-translucent'],
+   ['apple-mobile-web-app-title','Reckoner'],
+   ['mobile-web-app-capable','yes']].forEach(function(m){
+    var el = document.createElement('meta'); el.name = m[0]; el.content = m[1]; document.head.appendChild(el);
+  });
+})();
+DB = loadDB();
+applyTheme();
+render();
+</script>
+
+  <script>
+  /* If the app never rendered, say so instead of showing a blank page. */
+  (function(){
+    var app = document.getElementById('app');
+    if (app && !app.querySelector('.hd')){
+      app.innerHTML = '<div class="ns boot-error"><b>The page did not start.</b>' +
+        '<p>The screen stayed empty, which usually means scripts were blocked. Preview windows — Quick Look on iOS, mail and chat attachment viewers — never run them.</p>' +
+        '<p>Open the file in Safari, Chrome or Edge and it will work.</p></div>';
+    }
+  })();
+  </script>
+</body>
+</html>
